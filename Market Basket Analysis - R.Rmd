@@ -1,0 +1,256 @@
+---
+title: 'Market Basket Analysis '
+output: html_document
+---
+
+
+```{r}
+# install.packages('DMwR')
+# install.packages('xts')
+# install.packages('tseries')
+# install.packages('quantmod')
+# install.packages('RODBC')
+# install.packages('DBI')
+# install.packages('RMySQL')
+# install.packages('randomForest')
+# install.packages('nnet')
+# install.packages('e1071')
+# install.packages('kernlab')
+# install.packages('earth')
+# install.packages('PerformanceAnalytics')
+# install.packages('ROCR')
+# install.packages('RWeka')
+
+
+getwd()
+setwd("C:/Users/Lenovo B4400/Google Drive/0 Projects/Market Basket Analysis/")
+TrnsDataset1<-read.transactions("order_200_records_split_by_spaces-R-Ready.csv", format= c("single"), sep=",", cols = c(1,2),rm.duplicates = TRUE );
+TrnsDataset1<-read.transactions("orderAll-R-Ready.csv", format= c("single"), sep=",", cols = c(1,2),rm.duplicates = TRUE  );
+itemFrequencyPlot(TrnsDataset1, topN = 10)
+
+
+library('RODBC')
+db <- odbcConnect("seom2015")
+res <- sqlQuery(db,"SELECT OrderNumber AS TID, Term AS Items  FROM OrderDetailsTermChunkNounPhrase WHERE DATEPART(YEAR,DetailDate) = 2015 and Term != '' and Term IS NOT NULL  and UPPER(Term) != 'NULL' 
+and Term != 'Tool' and Term != 'Supply' and Term != 'Safety' and Term <> 'AirCraft' 
+and Term != 'Aerospace' and Term != 'Aircraft' ");
+setwd("C:/Users/Lenovo B4400/Google Drive/0 Projects/Market Basket Analysis/Latest data/")
+write.csv(res, file = "SEOM Transactions 80K 2015,2014 records.csv",row.names = FALSE)
+TrnsDataset1<-read.transactions("SEOM Transactions 80K 2015,2014 records.csv", format= c("single"), sep=",", cols = c(1,2),rm.duplicates = TRUE  );
+rules1 <- apriori(TrnsDataset1, parameter=list(support=0.0005, confidence=0.01))
+inspect(head(sort(rules1, by ="confidence"),500))
+write(rules1, file = "AssociationResult.csv", sep = "\t", col.names = NA)
+write(rules1, file = "AssociationResult.csv", sep = ",", col.names = NA, quote = TRUE)
+
+
+inspect(head(sort(rules1, by ="lift"),3))
+as.list(inspect(head(sort(rules1, by ="lift"),3)))
+inspect(subset(rules1, subset = lhs %in% "CAMGUARD-4PK" ))
+inspect(subset(rules1, subset = lhs %in% "48250" ))
+inspect(subset(rules1, subset = lhs %in% "60070-CASE" ))
+inspect(subset(rules1, subset = lhs %in% "H10-134" ))
+inspect(subset(rules1, subset = lhs %in% "1445846" ))
+inspect(subset(rules1, subset = lhs %in% "217556-CASE" ))
+inspect(subset(rules1, subset = lhs %in% "ASA-CX-2" ))
+inspect(subset(rules1, subset = lhs %in% "AVBLEND-4PK" ))
+inspect(subset(rules1, subset = lhs %in% "25W" ))
+inspect(subset(rules1, subset = lhs %in% "399" ))
+
+
+
+rulesIncomeSmall <- subset(rules1, subset = lhs %in% "CAMGUARD-4PK" )
+inspect(rulesIncomeSmall)
+
+as(inspect(rulesIncomeSmall), "matrix")
+
+
+
+seom <- read.csv("SEOM market basket.csv")
+plot(seom)
+seom[1,1:2]
+as.matrix(seom)
+# TrnsDataset1 <- read.transactions('SEOM market basket.csv');
+# mm <- t(as(TrnsDataset1,"ngCMatrix"))
+# mm
+TrnsDataset1<-read.transactions("sample2.txt", format= c("single"), sep="\t", cols = c(1,2), rm.duplicates=TRUE);
+```
+
+**Matrix to Transactions dataset**
+
+```{r}
+ 
+a_list <- list(
+      c("a","b","c"),
+      c("a","b"),
+      c("a","b","d"),
+      c("c","e"),
+      c("a","b","d","e")
+      )
+## set transaction names
+names(a_list) <- paste("Tr",c(1:5), sep = "")
+a_list
+## coerce into transactions
+trans <- as(a_list, "transactions")
+
+```
+
+**Data frame to Transactions dataset**
+
+```{r}
+a_df <- data.frame(
+    age = as.factor(c(6,8,7,6,9,5)), 
+    grade = as.factor(c(1,3,1,1,4,1)))  
+## note: all attributes have to be factors
+a_df[,1] 
+## coerce
+trans3 <- as(a_df, "transactions") 
+inspect(trans3[1:5])
+
+```
+
+**Creating transactions from a data.frame with  transaction IDs and items **
+
+```{r}
+a_df3 <- data.frame(TID = c(1,1,2,2,2,3), item=c("a","b","a","b","c", "b"))
+a_df3
+a_df3[,"item"]
+split(a_df3[,"item"], a_df3[,"TID"])
+trans4 <- as(split(a_df3[,"item"], a_df3[,"TID"]), "transactions")
+trans4
+LIST(trans4)
+
+
+
+Trns<-read.table("sample2.txt", sep = ",");
+Trns[,1]
+Trns1 <- as(Trns, "transactions") 
+Trns1
+inspect(Trns1[1:1])
+
+
+Trns<-read.csv("sample2.txt", sep = ",");
+a_df <- data.frame(
+    transactions = as.factor(Trns[,1]),
+    item = as.factor(Trns[,2])
+  )
+
+as.factor(Trns[,1])
+
+as(Trns,"transactions")
+
+Trns[,1]
+Trns[,2]
+
+Trns[V1]
+
+
+TrnsDataset10<-read.transactions("sample.txt", format= c("single"), sep="\t", cols = c("TID","Items"), rm.duplicates = TRUE );
+itemFrequencyPlot(TrnsDataset10, topN = 20)
+
+TrnsDataset1<-read.transactions("sample2.txt", format= c("single"), sep="\t", cols = c(1,2));
+TrnsDataset1
+inspect(TrnsDataset1[1:1])
+t(as(TrnsDataset1,"ngCMatrix"))
+
+setwd("C:/Users/Lenovo B4400/Google Drive/0 Projects/Market Basket Analysis/")  
+TrnsDataset10<-read.transactions("SEOM market basket.txt", format= c("single"), sep="\t", cols = c(1,2),rm.duplicates = TRUE  );
+itemFrequencyPlot(TrnsDataset10, topN = 20)
+rules1 <- apriori(TrnsDataset1, parameter=list(support=0.001, confidence=0.5))
+inspect(head(sort(rules1, by ="lift"),3))
+as.list(inspect(head(sort(rules1, by ="lift"),3)))
+gc(verbose=T)
+
+a_df3
+#TrnsDataset1<-read.csv("SEOM market basket - Full.txt", sep="\t");
+#TrnsDataset1<-read.csv("SEOM market basket_ProductName.csv", sep=",");
+SeomData <- as(split(TrnsDataset1[,"Item"], TrnsDataset1[,"TID"]), "transactions")
+inspect(SeomData[1:5])
+SeomRules <- apriori(SeomData, parameter=list(support=0.001, confidence=0.5))
+inspect(head(sort(SeomRules, by ="lift"),100))
+
+TrnsDataset200<-read.csv("SEOM market basket - Price Greater than 200.csv", sep=",");
+TrnsDataset200<-read.csv("SEOM market basket - Price Greater than 100 - Name Year -2014 and 2015.csv", sep=",");
+TrnsDataset200[1:5,]
+duplicated(TrnsDataset200)
+TrnsDataset200 <- TrnsDataset200[!duplicated(TrnsDataset200),]
+SeomData200 <- as(split(TrnsDataset200[,"Items"], TrnsDataset200[,"TID"]), "transactions")
+inspect(SeomData200[1:5])
+SeomRules200 <- apriori(SeomData200, parameter=list(support=0.0003, confidence=0.5))
+inspect(head(sort(SeomRules200, by ="lift"),80))
+#inspect(sort(SeomRules200, by ="lift"),80)
+#inspect(SeomRules200)
+SeomRules200
+inspect(subset(SeomRules200,5))
+as(SeomRules200,"list")
+rulesIncomeSmall <- subset(SeomRules200, subset = lhs %in% "565-453" )
+as(inspect(rulesIncomeSmall), "matrix")
+
+split(inspect(rulesIncomeSmall), "{")
+
+library('arulesViz')
+plot(rulesIncomeSmall, method="grouped")
+plot(rulesIncomeSmall, method="graph")
+plot(rulesIncomeSmall, method="paracoord")
+
+
+#TrnsDataset1<-read.transactions("SEOM market basket - Full.txt", format= c("single"), sep="\t", cols = c(1,2),rm.duplicates = TRUE  );
+#TrnsDataset1
+itemFrequencyPlot(TrnsDataset1, topN = 20)
+rules1 <- apriori(TrnsDataset1, parameter=list(support=0.001, confidence=0.5))
+inspect(head(sort(rules1, by ="lift"),10))
+
+
+
+t(as(TrnsDataset1,"ngCMatrix"))
+as(TrnsDataset1,"matrix")
+summary(TrnsDataset1)
+
+
+a
+# install.packages('arules')
+# install.packages('arulesViz') 
+library("arulesViz")
+data("Groceries")
+GroceryMat <- as(Groceries[1:5], "matrix")
+GroceryMat[1:5,1:5]
+GroceryMat[1:5,]
+
+# PREPARE DATA : Covert the matrix we have to transaction data
+GroceryTran <- as(as.matrix(GroceryMat), "transactions")
+summary(GroceryTran)
+
+sort(-itemFrequency(Groceries))
+
+## Top ten selling products
+itemFrequencyPlot(Groceries, support = 0.1)
+itemFrequencyPlot(Groceries, topN = 20)
+
+rules <- apriori(Groceries, parameter=list(support=0.001, confidence=0.5))
+
+# top 3 rules
+inspect(head(sort(rules, by ="lift"),3))
+
+plot(rules)
+plot(rules, shading="order", control=list(main = "Two-key plot"))
+
+# given a item, display what items people often buy with it
+sel <- plot(rules, measure=c("support", "lift"), shading="confidence", interactive=TRUE)
+
+
+plot(rules, method="grouped")
+plot(rules, method="grouped", control=list(k=50))
+
+#subrules2 <- head(sort(rules, by="lift"), 10)
+#library('igraph')
+plot(rules, method="graph", control=list(type="items"))
+
+Groceries
+inspect(Groceries)
+Groceries[1:2,]
+
+
+summary(Groceries)
+
+
+```
+
